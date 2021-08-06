@@ -4,10 +4,13 @@ import { ReviewDocument, Review } from './schemas/review.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ReviewsService {
-  constructor(@InjectModel(Review.name) private reviewModel: Model<ReviewDocument>) {}
+  constructor(
+    @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>
+  ) {}
 
   async create(createReviewDto: CreateReviewDto): Promise<Review> {
     return await this.reviewModel.create(createReviewDto);
