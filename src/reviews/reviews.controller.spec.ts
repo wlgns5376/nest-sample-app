@@ -1,82 +1,130 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
-import { Review } from './schemas/review.schema';
-import { getModelToken } from '@nestjs/mongoose';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { ReviewMockModel } from './mock/review.mock';
+import { Review } from './schemas/review.schema';
+import { NotFoundException } from '@nestjs/common';
 
 describe('ReviewsController 테스트', () => {
   let controller: ReviewsController;
+  let service: ReviewsService;
+  const mockCreateDto = (): CreateReviewDto => ({
+    product_id: 2,
+    name: 'Tom',
+    description: 'This is good.'
+  });
+
+  const mockReview = (): Review => ({
+    product_id: 1,
+    name: 'John',
+    description: 'This is great.'
+  });
 
   beforeEach(async () => {
+    const mockService = {
+      create: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn()
+    }    
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReviewsController],
       providers: [
-        ReviewsService,
         {
-          provide: getModelToken(Review.name),
-          useValue: ReviewMockModel,
+          provide: ReviewsService,
+          useValue: mockService,
         }
       ],
     }).compile();
 
     controller = module.get<ReviewsController>(ReviewsController);
+    service = module.get<ReviewsService>(ReviewsService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  it('findAll 결과는 Array 타입', async () => {
-    let reviews = await controller.findAll();
+  it('should be service created', async () => {
+    const createSpy = jest.spyOn(service, 'create');
 
-    expect(reviews).toBeInstanceOf(Array);
+    const mockDto: CreateReviewDto = mockCreateDto();
+    await controller.create(mockDto);
+
+    expect(createSpy).toHaveBeenCalledWith(mockDto);
   });
 
-  it('Create는 Object로 반환된다.', async () => {    
-    const createReviewDto: CreateReviewDto = new CreateReviewDto();
-    createReviewDto.product_id = 1;
-    createReviewDto.name = 'Tom';
-    createReviewDto.description = 'This is good.';
+  it('create 성공 후 Review 반환되어야 함', async () => {
+    const mockReturn = mockReview();
+    jest.spyOn(service, 'create').mockResolvedValue(mockReturn);
 
-    // save 메서드는 static이 아니라서 prototype으로 감시
-    const spyReview = jest.spyOn(ReviewMockModel.prototype, 'save');
-    const result = await controller.create(createReviewDto);
+    const response = await controller.create(mockCreateDto());
+
+    expect(response).toEqual(mockReturn);
+  });
+
+  it('findAll는 Review[]로 반환되어야 함', async () => {
+    jest.spyOn(service, 'findAll').mockResolvedValue([
+      mockReview()
+    ]);
+    const response = await controller.findAll();
+
+    expect(response).toBeInstanceOf(Array);
+  });
+
+  it('findOne에 결과는 Review로 반환되어야 함', async () => {
+    const mockReturn = mockReview();
+    jest.spyOn(service, 'findOne')
+      .mockResolvedValue(mockReturn);
+
+    const response = await controller.findOne('a1');
+
+    expect(response).toEqual(mockReturn);
+  });
+
+  it('findOne에 결과가 없으면 NotFound가 반환되어야 함', async () => {
+    jest.spyOn(service, 'findOne')
+      .mockRejectedValueOnce(new Error());
+
+    await expect(controller.findOne('a2')).rejects.toThrow(new NotFoundException());
+  });
+
+  it('service에 updateDto가 잘 전달되어야 함', async () => {
+    const updateSpy = jest.spyOn(service, 'update');
+    const updateDto: UpdateReviewDto = new UpdateReviewDto();
+    updateDto.description = 'This is not bad.';
+
+    await controller.update('a1', updateDto);
+
+    expect(updateSpy).toHaveBeenCalledWith('a1', updateDto);
+  });
+
+  it('존재하지 않는 Review id면 NotFound가 반환되어야 함', async () => {
+    jest.spyOn(service, 'update')
+      .mockRejectedValueOnce(new Error());
+
+    const updateDto: UpdateReviewDto = new UpdateReviewDto();
+    updateDto.description = 'This is not bad.';
+
+    await expect(controller.update('a2', updateDto)).rejects.toThrow(new NotFoundException());
+  });
+
+  it('remove 성공 후 OK가 반환되어야 함', async () => {
+    jest.spyOn(service, 'remove')
+      .mockResolvedValue(mockReview());
     
-    // save 메서드가 실행됐는지 확인
-    expect(spyReview).toBeCalled();
+    const response = await controller.remove('a1');
 
-    const resExpect = expect(result);
-    // Object로 리턴되는지 확인
-    resExpect.toBeInstanceOf(Object);
-    // 결과가 요청값과 동일한지 확인
-    resExpect.toHaveProperty('product_id', createReviewDto.product_id);
-
+    expect(response).toBe("OK");
   });
 
-
-  it('id로 Review 조회', async () => {
-    const reviewId: any = 'a1';
-    const result = await controller.findOne(reviewId);
-
-    expect(result).toHaveProperty('_id', reviewId);
-  });
-
-  it('id로 Review 수정', async () => {
-    const reviewId: string = 'a1';
-    const updatedDto: UpdateReviewDto = new UpdateReviewDto();
-    updatedDto.description = 'This is not bad';
-    const result = await controller.update(reviewId, updatedDto);
+  it('service remove 결과가 null이면 NotFound를 반환되어야 함', async () => {
+    jest.spyOn(service, 'remove')
+      .mockResolvedValue(null);
     
-    expect(result).toHaveProperty('description', updatedDto.description);
-  });
-
-  it('id로 Review 삭제 후 OK 반환', async () => {
-    const reviewId: string = 'a1';
-    const result = await controller.remove(reviewId);
-
-    expect(result).toBe('OK');
+    await expect(controller.remove('a1')).rejects.toThrow(new NotFoundException());
   });
 });

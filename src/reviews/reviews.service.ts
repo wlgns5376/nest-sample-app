@@ -10,23 +10,22 @@ export class ReviewsService {
   constructor(@InjectModel(Review.name) private reviewModel: Model<ReviewDocument>) {}
 
   async create(createReviewDto: CreateReviewDto): Promise<Review> {
-    const createdReview = new this.reviewModel(createReviewDto);
-    return createdReview.save();
+    return await this.reviewModel.create(createReviewDto);
   }
 
   async findAll(): Promise<Review[]> {
-    return this.reviewModel.find().exec();
+    return await this.reviewModel.find();
   }
 
   async findOne(id: any): Promise<Review> {
-    return this.reviewModel.findById(id).exec();
+    return await this.reviewModel.findById(id);
   }
 
   async update(id: string, updateReviewDto: UpdateReviewDto): Promise<Review> {
-    return this.reviewModel.findByIdAndUpdate(id, updateReviewDto, { new: true }).exec();
+    return await this.reviewModel.findByIdAndUpdate(id, updateReviewDto, { new: true });
   }
 
   async remove(id: string): Promise<Review> {
-    return this.reviewModel.findByIdAndRemove(id).exec();
+    return await this.reviewModel.findByIdAndRemove(id);
   }
 }

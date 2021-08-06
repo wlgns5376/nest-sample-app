@@ -6,13 +6,13 @@ export type ReviewDocument = Review & Document;
 @Schema()
 export class Review {
     @Prop({ required: true })
-    product_id: Number;
+    product_id: number;
 
     @Prop()
-    name: String;
+    name: string;
 
     @Prop()
-    description: String;
+    description: string;
 }
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);

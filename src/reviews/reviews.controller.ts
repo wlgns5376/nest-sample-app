@@ -29,17 +29,21 @@ export class ReviewsController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto): Promise<Review> {
-    return this.reviewsService.update(id, updateReviewDto);
+    try {
+      return await this.reviewsService.update(id, updateReviewDto);
+    } catch (error) {
+      throw new NotFoundException();
+    }
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<String> {
     try {      
       const result = await this.reviewsService.remove(id);
       if (result === null) {
         throw new NotFoundException();
       }
-      
+
       return 'OK';
     } catch (error) {
       throw new NotFoundException();
