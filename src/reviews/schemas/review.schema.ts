@@ -1,12 +1,24 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, raw, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 
 export type ReviewDocument = Review & Document;
 
+@Schema({ _id: false })
+class Product {
+    @Prop()
+    id: number;
+
+    @Prop()
+    name: string;
+
+    @Prop()
+    image_url: string;
+}
+
 @Schema()
 export class Review {
-    @Prop({ required: true })
-    product_id: number;
+    @Prop({ type: Product, required: true })
+    product: Product
 
     @Prop()
     name: string;

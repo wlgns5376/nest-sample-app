@@ -2,24 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { Review, ReviewDocument } from './schemas/review.schema';
+import { Review } from './schemas/review.schema';
 import { getModelToken } from '@nestjs/mongoose';
+import { mockCreateDto, mockReview } from './mock/review.mock';
 
 describe('ReviewsService 테스트', () => {
   let service: ReviewsService;
   let repository: any;
-
-  const mockCreateDto = (): CreateReviewDto => ({
-    product_id: 2,
-    name: 'Tom',
-    description: 'This is good.'
-  });
-
-  const mockReview = (): Review => ({
-    product_id: 1,
-    name: 'John',
-    description: 'This is great.'
-  });
 
   const mockRepository = {
     create: jest.fn(),
@@ -50,7 +39,7 @@ describe('ReviewsService 테스트', () => {
 
   it('create에 CreateReviewDto가 잘 전달되어야 함', async () => {
     const createSpy = jest.spyOn(repository, 'create');
-    const createDto = mockCreateDto();
+    const createDto: CreateReviewDto = mockCreateDto();
 
     await service.create(createDto);
 

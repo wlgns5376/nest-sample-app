@@ -3,24 +3,13 @@ import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { Review } from './schemas/review.schema';
 import { NotFoundException } from '@nestjs/common';
+import { mockCreateDto, mockReview } from './mock/review.mock';
 
 describe('ReviewsController 테스트', () => {
   let controller: ReviewsController;
   let service: ReviewsService;
-  const mockCreateDto = (): CreateReviewDto => ({
-    product_id: 2,
-    name: 'Tom',
-    description: 'This is good.'
-  });
-
-  const mockReview = (): Review => ({
-    product_id: 1,
-    name: 'John',
-    description: 'This is great.'
-  });
-
+  
   beforeEach(async () => {
     const mockService = {
       create: jest.fn(),
