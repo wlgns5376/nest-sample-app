@@ -9,15 +9,21 @@ export const mockCreateDto = (): CreateReviewDto => ({
     image_url: null,
   },
   name: 'Tom',
-  description: 'This is good.'
+  description: 'This is good.',
+  photos: [
+    'sample.jpeg'
+  ],
 });
 
-export const mockReview = (): Review => ({
+export const mockReview = () => ({
   product: {
     id: 1,
     name: 'Americano',
     image_url: null,
   },
   name: 'John',
-  description: 'This is great.'
+  description: 'This is great.',
+  photos: [
+    'sample.jpeg'
+  ],
 });

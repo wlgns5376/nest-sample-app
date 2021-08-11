@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { getModelToken } from '@nestjs/mongoose';
+
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Review } from './schemas/review.schema';
-import { getModelToken } from '@nestjs/mongoose';
 import { mockCreateDto, mockReview } from './mock/review.mock';
 
 describe('ReviewsService 테스트', () => {
@@ -15,7 +17,9 @@ describe('ReviewsService 테스트', () => {
     find: jest.fn(),
     findById: jest.fn(),
     findByIdAndUpdate: jest.fn(),
-    findByIdAndRemove: jest.fn(),
+    findByIdAndRemove: jest.fn(id => {
+      return {}
+    }),
   };
 
   beforeEach(async () => {
@@ -25,7 +29,15 @@ describe('ReviewsService 테스트', () => {
         {
           provide: getModelToken(Review.name),
           useValue: mockRepository
-        }
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              return key;
+            })
+          }
+        },
       ]
     }).compile();
 
@@ -33,7 +45,7 @@ describe('ReviewsService 테스트', () => {
     repository = module.get(getModelToken(Review.name));
   });
 
-  it('should be defined', () => {
+  it('should be defined', async () => {
     expect(service).toBeDefined();
   });
 
@@ -96,4 +108,30 @@ describe('ReviewsService 테스트', () => {
 
     expect(removeSpy).toHaveBeenCalledWith('a1');
   });
+
+  describe('Update photos', () => {
+    const oldPhotos: string[] = [
+      'img-a.jpg',
+      'img-b.jpg',
+      'img-c.jpg',
+    ];
+    const newPhotos: string[] = [
+      'img-a1.jpg',
+      'img-b.jpg',
+    ];
+
+    it('should return photos for delete', () => {  
+      expect(oldPhotos.filter(photo => !newPhotos.includes(photo))).toMatchObject([
+        'img-a.jpg',
+        'img-c.jpg',
+      ]);
+    });
+
+    it('should return photos for register', () => {  
+      expect(newPhotos.filter(photo => !oldPhotos.includes(photo))).toMatchObject([
+        'img-a1.jpg'
+      ]);
+    });
+  });
+
 });

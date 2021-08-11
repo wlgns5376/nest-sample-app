@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { NotFoundException } from '@nestjs/common';
 import { mockCreateDto, mockReview } from './mock/review.mock';
 
 describe('ReviewsController 테스트', () => {

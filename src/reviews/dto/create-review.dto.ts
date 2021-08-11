@@ -22,4 +22,6 @@ export class CreateReviewDto {
     name: string;
 
     description: string;
+
+    photos: string[];
 }

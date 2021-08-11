@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  NotFoundException,
+  UseInterceptors,
+  UploadedFiles 
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -48,5 +61,14 @@ export class ReviewsController {
     } catch (error) {
       throw new NotFoundException();
     }
+  }
+
+  @Post('upload')
+  @UseInterceptors(FilesInterceptor('files', 5))
+  uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
+    return files.map(file => ({
+      filename: file.filename,
+      path: file.path,
+    }))
   }
 }

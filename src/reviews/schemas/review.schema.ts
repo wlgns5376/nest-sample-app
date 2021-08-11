@@ -1,4 +1,4 @@
-import { Prop, raw, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 
 export type ReviewDocument = Review & Document;
@@ -15,7 +15,7 @@ class Product {
     image_url: string;
 }
 
-@Schema()
+@Schema({ toJSON: { virtuals: true } })
 export class Review {
     @Prop({ type: Product, required: true })
     product: Product
@@ -25,6 +25,30 @@ export class Review {
 
     @Prop()
     description: string;
+
+    @Prop()
+    photos: string[];
+
 }
 
 export const ReviewSchema = SchemaFactory.createForClass(Review);
+
+/**
+ * Main photo url plugin
+ * 
+ * @param schema any Mongoose schema
+ * @param options any 
+ */
+export const mainPhotoUrlPlugin = (schema: any, options: any) => {
+    schema.virtual('mainPhotoUrl').get(function() {
+        if (this.photos.length == 0) {
+            return null;
+        }
+
+        if (options.photoPath) {
+        return `${options.photoPath}/${this.photos[0]}`;
+        }
+
+        return this.photos[0];
+    });
+}

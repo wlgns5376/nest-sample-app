@@ -1,8 +1,13 @@
+import { existsSync, rmSync } from 'fs';
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
 import * as request from 'supertest';
-import { AppModule } from './../src/app.module';
 import { Connection } from 'mongoose';
+
+import { AppModule } from '../src/app.module';
 import { DatabaseService } from '../src/database/database.service';
 import { CreateReviewDto } from '../src/reviews/dto/create-review.dto';
 import { UpdateReviewDto } from '../src/reviews/dto/update-review.dto';
@@ -12,6 +17,8 @@ describe('ReviewController (e2e)', () => {
   let app: INestApplication;
   let httpServer: any;
   let dbConnection: Connection;
+  let configService: ConfigService;
+  let uploadImages: string[];
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,12 +30,16 @@ describe('ReviewController (e2e)', () => {
     await app.init();
 
     dbConnection = moduleFixture.get<DatabaseService>(DatabaseService).getConnection();
+    configService = moduleFixture.get<ConfigService>(ConfigService);
     httpServer = app.getHttpServer();
   });
 
   afterAll(async () => {
     await app.close();
     await dbConnection.close();
+    rmSync(configService.get<string>('STATIC_PATH'), {
+      recursive: true
+    });
   });
 
   beforeEach(async () => {
@@ -41,14 +52,36 @@ describe('ReviewController (e2e)', () => {
     const response = await request(httpServer).get('/reviews');
 
     expect(response.status).toBe(200);
-    // 변수를 배열로 담으면 추가 데이터가 생겨나서 match 실패 됨. 아마도 참조 데이터가 붙는 것 같음
+    // @NOTE: 변수를 배열로 담으면 추가 데이터가 생겨나서 match 실패 됨. 아마도 참조 데이터가 붙는 것 같음
     expect(response.body).toMatchObject([mockCreateDto()]);
+  });
+
+  it('/reviews/upload (POST)', async () => {
+    const response = await request(httpServer).post('/reviews/upload')
+      .set('Content-Type', 'multipart/form-data')
+      .attach('files', 'test/photos/sample.jpeg');
+
+    expect(response.status).toBe(201);
+    expect(response.body).toBeInstanceOf(Array);
+    // 파일이 실제 경로에 저장됐는지 확인
+    expect(existsSync(response.body[0].path)).toBeTruthy();
+
+    uploadImages = response.body;
+  });
+
+  it('/reviews/upload (POST) Validate', async () => {
+    // 허용된 확장자 이외의 파일 업로드 시 에러확인
+    await request(httpServer).post('/reviews/upload')
+      .set('Content-Type', 'multipart/form-data')
+      .attach('files', 'test/photos/sample.txt')
+      .expect(400);
   });
 
   it('/reviews (POST)', async () => {
     const createDto: CreateReviewDto = {
       ...mockCreateDto()
     }
+    createDto.photos = uploadImages.map((file: any) => file.filename);
     const response = await request(httpServer).post('/reviews').send(createDto);
 
     expect(response.status).toBe(201);
@@ -83,6 +116,7 @@ describe('ReviewController (e2e)', () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject(mockCreateDto());
     expect(response.body._id == result.insertedId).toBeTruthy();
+    expect(response.body.mainPhotoUrl).toMatch(configService.get<string>('review.photoPath'));
     //expect(response.body._id).toEqual(result.insertedId); // serializes to the same string
   });
 
@@ -138,4 +172,5 @@ describe('ReviewController (e2e)', () => {
     await request(httpServer).delete('/reviews/a1')
       .expect(404);
   });
+
 });
