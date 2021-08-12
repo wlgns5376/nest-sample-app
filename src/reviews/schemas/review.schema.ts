@@ -15,7 +15,12 @@ class Product {
     image_url: string;
 }
 
-@Schema({ toJSON: { virtuals: true } })
+@Schema({
+    toJSON: {
+        virtuals: true,
+        transform: (doc, { _v, ...rest }) => rest
+    }
+})
 export class Review {
     @Prop({ type: Product, required: true })
     product: Product
