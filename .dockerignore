@@ -1,0 +1,12 @@
+.github
+.git
+.devcontainer
+.vscode
+vendor
+node_modules
+.env
+.env.test
+Dockerfile
+Dockerfile.*
+docker-composer.yml
+note.txt
