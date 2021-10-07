@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
@@ -14,6 +15,16 @@ async function bootstrap() {
     prefix: `/${staticPath}/`,
   });
   app.useGlobalPipes(new ValidationPipe());
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle("Sample API")
+    .setDescription("The review API description")
+    .setVersion('1.0')
+    .addTag('reviews')
+    .build();
+  
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(configService.get('PORT'));
 }

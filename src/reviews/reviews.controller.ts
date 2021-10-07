@@ -15,8 +15,11 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { FilesUploadDto } from './dto/fileupload.dto';
 import { Review } from './schemas/review.schema';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('reviews')
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
@@ -65,6 +68,11 @@ export class ReviewsController {
 
   @Post('upload')
   @UseInterceptors(FilesInterceptor('files', 5))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'List of cats',
+    type: FilesUploadDto,
+  })
   uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
     return files.map(file => ({
       filename: file.filename,
